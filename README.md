@@ -5,6 +5,7 @@ It contains the gromacs-style (itp) topology and parameter files for the system,
 
 ## Contents:
 | Name | Description |
+|-----|-------|
 | toppar/       | Gromacs-style (*.itp) topology and parameter files for the charmm36m force field, including the ligand NS11021 | 
 | restraints/   | Gromacs-style harmonic restraint files |
 | 24.pdb        | system snapshot with NS11021 CoM 24 Ang from filter|
