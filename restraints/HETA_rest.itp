@@ -1,0 +1,38 @@
+#ifdef STEP6_0
+#define fc_bb 4000.0
+#define fc_sc 2000.0
+#endif
+#ifdef STEP6_1
+#define fc_bb 4000.0
+#define fc_sc 2000.0
+#endif
+#ifdef STEP6_2
+#define fc_bb 2000.0
+#define fc_sc 1000.0
+#endif
+#ifdef STEP6_3
+#define fc_bb 1000.0
+#define fc_sc 500.0
+#endif
+#ifdef STEP6_4
+#define fc_bb 500.0
+#define fc_sc 200.0
+#endif
+#ifdef STEP6_5
+#define fc_bb 200.0
+#define fc_sc 50.0
+#endif
+#ifdef STEP6_6
+#define fc_bb 50.0
+#define fc_sc 0.0
+#endif
+#ifdef STEP7
+#define fc_bb 0.0
+#define fc_sc 0.0
+#endif
+
+[ position_restraints ]
+    1     1    fc_bb    fc_bb    fc_bb
+    2     1    fc_bb    fc_bb    fc_bb
+    3     1    fc_bb    fc_bb    fc_bb
+    4     1    fc_bb    fc_bb    fc_bb

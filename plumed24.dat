@@ -1,0 +1,76 @@
+# vim: ft=plumed
+# Count water/lipid/ions: COORDINATION
+#   https://www.plumed.org/doc-v2.6/user-doc/html/_c_o_o_r_d_i_n_a_t_i_o_n.html
+# drug CVs: distance along z and xydistances
+#   https://www.plumed.org/doc-v2.7/user-doc/html/_d_i_s_t_a_n_c_e.html
+# angle: ANGLE
+#   https://www.plumed.org/doc-v2.7/user-doc/html/_a_n_g_l_e.html
+
+# change units
+UNITS LENGTH=A ENERGY=kcal/mol
+
+# water pore occupancy
+###########
+water:  GROUP NDX_FILE=md.ndx NDX_GROUP=TOMNAME_OH2        # really the water O
+center: GROUP NDX_FILE=md.ndx NDX_GROUP=C-alpha_&_r_314    # 314 CA
+cen: CENTER ATOMS=center
+occ: COORDINATION GROUPA=cen GROUPB=water SWITCH={GAUSSIAN D_0=8 R_0=1.5 D_MAX=13} NLIST NL_CUTOFF=20 NL_STRIDE=10
+
+# lipid pore occupancy
+##############
+# lipid diffusion will be negligible in 100ns, safe to set stride to be large (it will still update)
+# conservative radius just to prevent lipids from getting stuck
+lipids: GROUP NDX_FILE=md.ndx NDX_GROUP=POPC_&_TOMNAME_C*  # really popc C
+lip: COORDINATION GROUPA=cen GROUPB=lipids SWITCH={GAUSSIAN D_0=5 R_0=1 D_MAX=9} NLIST NL_CUTOFF=20 NL_STRIDE=10000
+restlip: RESTRAINT ARG=lip AT=0 SLOPE=40 # penalty of 40 kcal/mol for each lipid C entering the pore
+
+# potassium pore occupancy # not yet tested
+##########
+potsm:  GROUP NDX_FILE=md.ndx NDX_GROUP=POT                # potassium
+cen2er: GROUP NDX_FILE=md.ndx NDX_GROUP=C-alpha_&_r_314    # 320 CA
+cen2: CENTER ATOMS=cen2er 
+pot: COORDINATION GROUPA=cen2 GROUPB=potsm SWITCH={GAUSSIAN D_0=5 R_0=1 D_MAX=8} NLIST NL_CUTOFF=20 NL_STRIDE=10
+#restpot: RESTRAINT ARG=pot AT=1 SLOPE=40 # penalty of 40 kcal/mol for each POT entering the pore
+
+# selectivity filter
+filter: GROUP NDX_FILE=md.ndx NDX_GROUP=Backbone_&_r_286_287_288
+sf: CENTER ATOMS=filter
+
+# NS1 z-position relative to SF
+ns1: GROUP NDX_FILE=md.ndx NDX_GROUP=NS1
+ns1cen: CENTER ATOMS=ns1 MASS
+
+# angle between z-axis and NS1 'long principle axis'
+az: GROUP NDX_FILE=md.ndx NDX_GROUP=NS1_azhalf
+azcen: CENTER ATOMS=az MASS
+fb: GROUP NDX_FILE=md.ndx NDX_GROUP=NS1_fbhalf
+fbcen: CENTER ATOMS=fb MASS
+filter2: GROUP NDX_FILE=md.ndx NDX_GROUP=Backbone_&_r_289_290_291
+sf2: CENTER ATOMS=filter2
+a: ANGLE ATOMS=azcen,fbcen,sf,sf2 
+# Angle between the axis connecting the two modules of NS1 and the protein z-axis, theta = arccos(r12.r34 /( |r12| |r34| ))
+#  Notice that angles defined in this way are non-periodic variables and their value is limited by definition between 0 and π.
+
+# distance between NS1 CoM and sf 
+d: DISTANCE ATOMS=sf,ns1cen COMPONENTS 
+daz: DISTANCE ATOMS=sf,azcen COMPONENTS 
+dfb: DISTANCE ATOMS=sf,fbcen COMPONENTS 
+
+# NS1 thiourea torsions
+t0: GROUP NDX_FILE=md.ndx NDX_GROUP=NS1_&_S_C_NT1_CP1
+theta0: TORSION ATOMS=t0 # still in radians
+
+t1: GROUP NDX_FILE=md.ndx NDX_GROUP=NS1_&_S_C_NT2_CF1
+theta1: TORSION ATOMS=t1 # still in radians
+
+# restrain occ between 2 and 90 ('flat-bottom' between)
+lx: LOWER_WALLS ARG=d.x AT=-8.0 KAPPA=5.0
+ly: LOWER_WALLS ARG=d.y AT=-8.0 KAPPA=5.0
+ux: UPPER_WALLS ARG=d.x AT=8.0  KAPPA=5.0
+uy: UPPER_WALLS ARG=d.y AT=8.0  KAPPA=5.0
+
+# Umbrella restraint
+ub: RESTRAINT ARG=d.z AT=24 KAPPA=0.5
+
+# z now refers to the whole NS1 CoM
+PRINT FILE=COLVAR_24 STRIDE=250 ARG=d.z,daz.z,dfb.z,d.x,d.y,theta0,theta1,a,occ,lip,pot
