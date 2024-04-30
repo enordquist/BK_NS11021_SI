@@ -6,8 +6,8 @@ include                 =  -I.. -I.
 ; Output parameters
 nstxout                 = 0         ; suppress bulky .trr 
 nstvout                 = 0
-nstlog                  = 25000 ; every 5 ps
-nstenergy               = 25000 ; every 5 ps
+nstlog                  = 25000
+nstenergy               = 25000
 nstxtcout               = 2500 ; xtc   every 5 ps
 xtc_grps                = system 
 
